@@ -38,6 +38,14 @@ jobs:
           path: test/reports/*.html
           retention-days: 30
 
+      - name: Verify mail secrets are present
+        if: always()
+        run: |
+          echo "MAIL_SERVER set:   ${{ secrets.MAIL_SERVER != '' }}"
+          echo "MAIL_PORT set:     ${{ secrets.MAIL_PORT != '' }}"
+          echo "MAIL_USERNAME set: ${{ secrets.MAIL_USERNAME != '' }}"
+          echo "MAIL_PASSWORD set: ${{ secrets.MAIL_PASSWORD != '' }}"
+
       - name: Send email notification
         if: always()          # notify on both success and failure
         uses: dawidd6/action-send-mail@v3
