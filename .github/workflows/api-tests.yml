@@ -1,13 +1,13 @@
 name: API Automation Tests
 
 on:
-  push:
-    branches: [main]
+  push:                       # run on every push to any branch
   pull_request:
     branches: [main]
-  workflow_dispatch:        # allow manual runs from the Actions tab
+  workflow_dispatch:          # allow manual runs from the Actions tab
   schedule:
-    - cron: "0 2 * * *"     # nightly run at 02:00 UTC
+    # 09:30 AM IST (Mon–Fri) == 04:00 UTC. GitHub cron is always UTC.
+    - cron: "0 4 * * 1-5"
 
 jobs:
   newman:
@@ -37,3 +37,26 @@ jobs:
           name: newman-reports
           path: test/reports/*.html
           retention-days: 30
+
+      - name: Send email notification
+        if: always()          # notify on both success and failure
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.MAIL_SERVER }}
+          server_port: ${{ secrets.MAIL_PORT }}
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "API Automation Tests: ${{ job.status }} (${{ github.ref_name }})"
+          to: priyanka_s@tekditechnologies.com,priyanka_s+22+@tekditechnologies.com
+          from: API Automation <${{ secrets.MAIL_USERNAME }}>
+          body: |
+            API Automation Tests finished with status: ${{ job.status }}
+
+            Repository: ${{ github.repository }}
+            Branch/ref: ${{ github.ref_name }}
+            Triggered by: ${{ github.event_name }}
+            Commit: ${{ github.sha }}
+
+            View the full run and download the HTML reports here:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          attachments: test/reports/*.html
