@@ -1,8 +1,8 @@
 param(
-    [string]$Collection  = "test\API_automation.postman_collection.json",
-    [string]$Environment = "test\API_automation.postman_environment.json",
-    [string]$OutputDir   = "test\reports",
-    [string]$Data   = "test\languages.csv"
+    [string]$Collection  = "test/API_automation.postman_collection.json",
+    [string]$Environment = "test/API_automation.postman_environment.json",
+    [string]$OutputDir   = "test/reports",
+    [string]$Data   = "test/languages.csv"
 )
 
 $ErrorActionPreference = "Stop"
