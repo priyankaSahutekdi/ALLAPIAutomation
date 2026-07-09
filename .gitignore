@@ -1,0 +1,5 @@
+# Newman run output
+test/reports/
+
+# Node
+node_modules/
