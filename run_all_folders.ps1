@@ -37,6 +37,7 @@ $Iterations = @{
 
 $OverallExitCode = 0
 $FolderResults = @{}
+$JsonReports = @()
 
 # Working copy of the environment that gets updated after each folder run,
 # so tokens/variables saved by one folder (e.g. genarate_virtualId) carry
@@ -50,6 +51,7 @@ foreach ($Folder in $Folders) {
     Write-Host "Running folder: $Folder"
 
     $HtmlReport = Join-Path $OutputDir "${Folder}_report_${Timestamp}.html"
+    $JsonReport = Join-Path $OutputDir "${Folder}_report_${Timestamp}.json"
 
     $IterationArgs = @()
     if ($Iterations.ContainsKey($Folder) -and $Iterations[$Folder]) {
@@ -61,9 +63,10 @@ foreach ($Folder in $Folders) {
         "--folder", $Folder,
         "-e", $WorkingEnvironment,
         "-d", $Data,
-        "-r", "htmlextra",
+        "-r", "htmlextra,json",
         "--insecure",
         "--reporter-htmlextra-export", $HtmlReport,
+        "--reporter-json-export", $JsonReport,
         "--reporter-htmlextra-title", "$Folder Test Report",
         "--reporter-htmlextra-browserTitle", "$Folder API Test",
         "--reporter-htmlextra-titleSize", "3",
@@ -87,8 +90,17 @@ foreach ($Folder in $Folders) {
         $FolderResults[$Folder] = "PASSED"
     }
 
+    $JsonReports += $JsonReport
+
     Write-Host "Report: $HtmlReport"
     Write-Host "-----------------------------------------------------"
+}
+
+# --- Build the email-safe HTML summary (never fail the run because of this) ---
+try {
+    & "$PSScriptRoot/build_email_summary.ps1" -Reports $JsonReports -OutputFile (Join-Path $OutputDir "email-summary.html")
+} catch {
+    Write-Host "WARNING: Failed to build email summary: $($_.Exception.Message)" -ForegroundColor Yellow
 }
 
 # --- Summary ---

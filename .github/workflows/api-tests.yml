@@ -38,13 +38,20 @@ jobs:
           path: test/reports/*.html
           retention-days: 30
 
-      - name: Verify mail secrets are present
+      - name: Load email summary HTML
         if: always()
+        id: summary
+        shell: bash
         run: |
-          echo "MAIL_SERVER set:   ${{ secrets.MAIL_SERVER != '' }}"
-          echo "MAIL_PORT set:     ${{ secrets.MAIL_PORT != '' }}"
-          echo "MAIL_USERNAME set: ${{ secrets.MAIL_USERNAME != '' }}"
-          echo "MAIL_PASSWORD set: ${{ secrets.MAIL_PASSWORD != '' }}"
+          {
+            echo 'html<<__EMAIL_SUMMARY_EOF__'
+            if [ -f test/reports/email-summary.html ]; then
+              cat test/reports/email-summary.html
+            else
+              echo "<p>Summary report was not generated. See the run logs and attached reports.</p>"
+            fi
+            echo '__EMAIL_SUMMARY_EOF__'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Send email notification
         if: always()          # notify on both success and failure
@@ -57,6 +64,7 @@ jobs:
           subject: "API Automation Tests: ${{ job.status }} (${{ github.ref_name }})"
           to: priyanka_s@tekditechnologies.com,priyanka_s+22+@tekditechnologies.com
           from: API Automation <${{ secrets.MAIL_USERNAME }}>
+          html_body: ${{ steps.summary.outputs.html }}
           body: |
             API Automation Tests finished with status: ${{ job.status }}
 
