@@ -62,7 +62,7 @@ jobs:
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: "API Automation Tests: ${{ job.status }} (${{ github.ref_name }})"
-          to: priyanka_s@tekditechnologies.com,devendra.patil@tekditechnologies.com,gourav_m@tekditechnologies.com
+          to: priyanka_s@tekditechnologies.com,devendra.patil@tekditechnologies.com,gourav_m@tekditechnologies.com,satheesh@navadhiti.com
           from: API Automation <${{ secrets.MAIL_USERNAME }}>
           html_body: ${{ steps.summary.outputs.html }}
           body: |
