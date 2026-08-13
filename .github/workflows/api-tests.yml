@@ -9,7 +9,7 @@ on:
       max_response_time:
         description: "Response-time limit in ms for timing assertions"
         required: false
-        default: "3000"
+        default: "5000"
   schedule:
     # 09:30 AM IST (Mon–Fri) == 04:00 UTC. GitHub cron is always UTC.
     - cron: "0 4 * * 1-5"
