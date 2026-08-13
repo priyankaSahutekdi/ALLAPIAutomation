@@ -5,6 +5,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:          # allow manual runs from the Actions tab
+    inputs:
+      max_response_time:
+        description: "Response-time limit in ms for timing assertions"
+        required: false
+        default: "3000"
   schedule:
     # 09:30 AM IST (Mon–Fri) == 04:00 UTC. GitHub cron is always UTC.
     - cron: "0 4 * * 1-5"
@@ -28,6 +33,10 @@ jobs:
 
       - name: Run API test suite
         shell: pwsh
+        env:
+          # Manual runs can override the limit; scheduled/push runs fall back
+          # to the maxResponseTime value in the environment file.
+          MAX_RESPONSE_TIME: ${{ inputs.max_response_time }}
         run: ./run_all_folders.ps1
 
       - name: Upload HTML reports

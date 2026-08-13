@@ -2,7 +2,12 @@ param(
     [string]$Collection  = "test/API_automation.postman_collection.json",
     [string]$Environment = "test/API_automation.postman_environment.json",
     [string]$OutputDir   = "test/reports",
-    [string]$Data   = "test/languages.csv"
+    [string]$Data   = "test/languages.csv",
+    # Response-time limit (ms) for every timing assertion. Overrides the
+    # maxResponseTime value in the environment file, so CI can loosen or
+    # tighten it without editing the collection. Falls back to the
+    # MAX_RESPONSE_TIME env var, then to whatever the environment file holds.
+    [string]$MaxResponseTime = $env:MAX_RESPONSE_TIME
 )
 
 $ErrorActionPreference = "Stop"
@@ -58,6 +63,11 @@ foreach ($Folder in $Folders) {
         $IterationArgs = @("--iteration-count", $Iterations[$Folder])
     }
 
+    $ThresholdArgs = @()
+    if ($MaxResponseTime) {
+        $ThresholdArgs = @("--env-var", "maxResponseTime=$MaxResponseTime")
+    }
+
     $NewmanArgs = @(
         "run", $Collection,
         "--folder", $Folder,
@@ -76,7 +86,7 @@ foreach ($Folder in $Folders) {
         "--reporter-htmlextra-showFolder=true",
         "--reporter-htmlextra-omitHeaders=false",
         "--export-environment", $WorkingEnvironment
-    ) + $IterationArgs
+    ) + $IterationArgs + $ThresholdArgs
 
     & newman @NewmanArgs
     $FolderExitCode = $LASTEXITCODE
