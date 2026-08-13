@@ -62,6 +62,34 @@ jobs:
             echo '__EMAIL_SUMMARY_EOF__'
           } >> "$GITHUB_OUTPUT"
 
+      - name: Choose email recipients
+        if: always()
+        id: recipients
+        shell: bash
+        run: |
+          # Temporary narrow notification while the merge is being verified:
+          # only the maintainer is emailed. At the cutover below the full
+          # distribution list is restored automatically, so no follow-up
+          # commit or manual edit is needed.
+          #
+          # Cutover: 2026-08-14 00:00 UTC == 05:30 IST, which is ahead of the
+          # 09:30 IST scheduled run on Fri 14 Aug -- so that run, and every
+          # run after it, goes to all 9 recipients.
+          CUTOVER_EPOCH=1786665600
+          MAINTAINER_ONLY="priyanka_s@tekditechnologies.com"
+          FULL_LIST="priyanka_s@tekditechnologies.com,devendra.patil@tekditechnologies.com,gourav_m@tekditechnologies.com,satheesh@navadhiti.com,amol.chitale@tekditechnologies.com,suresh.kumar@ekstepplus.org,abhineet@ekstep.org,palani@navadhiti.com,sai@ekstep.org"
+
+          NOW_EPOCH=$(date -u +%s)
+          if [ "$NOW_EPOCH" -lt "$CUTOVER_EPOCH" ]; then
+            RECIPIENTS="$MAINTAINER_ONLY"
+            echo "Before cutover ($(date -u -d "@$CUTOVER_EPOCH" '+%Y-%m-%d %H:%M UTC')) - notifying maintainer only."
+          else
+            RECIPIENTS="$FULL_LIST"
+            echo "Cutover passed - notifying the full distribution list."
+          fi
+          echo "Now: $(date -u '+%Y-%m-%d %H:%M UTC'). Recipients: $RECIPIENTS"
+          echo "to=$RECIPIENTS" >> "$GITHUB_OUTPUT"
+
       - name: Send email notification
         if: always()          # notify on both success and failure
         uses: dawidd6/action-send-mail@v3
@@ -71,7 +99,7 @@ jobs:
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: "API Automation Tests: ${{ job.status }} (${{ github.ref_name }})"
-          to: priyanka_s@tekditechnologies.com,devendra.patil@tekditechnologies.com,gourav_m@tekditechnologies.com,satheesh@navadhiti.com,amol.chitale@tekditechnologies.com,suresh.kumar@ekstepplus.org,abhineet@ekstep.org,palani@navadhiti.com,sai@ekstep.org
+          to: ${{ steps.recipients.outputs.to }}
           from: API Automation <${{ secrets.MAIL_USERNAME }}>
           html_body: ${{ steps.summary.outputs.html }}
           body: |
