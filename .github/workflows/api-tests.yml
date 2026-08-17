@@ -162,8 +162,10 @@ jobs:
             View the full run and download the HTML reports here:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           attachments: test/reports/*.html
-          # Logs the SMTP conversation at a high level so a send failure names
-          # its own cause in the run log. Deliberately not nodemailerdebug:
-          # that dumps the AUTH exchange, and base64-encoded secrets are not
-          # masked by Actions.
-          nodemailerlog: true
+          # No nodemailerlog here. Both v3 and v18 pass the raw input string
+          # straight to nodemailer's `logger` option
+          # (logger: nodemailerdebug == "true" ? true : nodemailerlog), so the
+          # string "true" is treated as a logger object and the send dies with
+          # "logger[level] is not a function". It is only usable together with
+          # nodemailerdebug, which dumps the AUTH exchange and is not worth the
+          # secret exposure.
