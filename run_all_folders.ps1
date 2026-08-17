@@ -73,8 +73,16 @@ foreach ($Folder in $Folders) {
         "--folder", $Folder,
         "-e", $WorkingEnvironment,
         "-d", $Data,
-        "-r", "htmlextra,json",
+        # cli is included so a failing assertion is named in the console (and
+        # therefore in the CI log). Without it the only record of *what* failed
+        # lives inside the HTML/JSON reports, which meant a CI failure showed
+        # nothing but "Folder 'X' FAILED".
+        "-r", "cli,htmlextra,json",
         "--insecure",
+        # Successful assertions are suppressed so the failures stand out;
+        # there are ~1100 per folder and printing them all buries the signal.
+        "--reporter-cli-no-success-assertions",
+        "--reporter-cli-no-banner",
         "--reporter-htmlextra-export", $HtmlReport,
         "--reporter-json-export", $JsonReport,
         "--reporter-htmlextra-title", "$Folder Test Report",
