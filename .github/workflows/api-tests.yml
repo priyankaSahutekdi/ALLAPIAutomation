@@ -90,6 +90,55 @@ jobs:
           echo "Now: $(date -u '+%Y-%m-%d %H:%M UTC'). Recipients: $RECIPIENTS"
           echo "to=$RECIPIENTS" >> "$GITHUB_OUTPUT"
 
+      - name: Check mail configuration
+        if: always()
+        shell: bash
+        env:
+          MAIL_SERVER: ${{ secrets.MAIL_SERVER }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          RECIPIENTS: ${{ steps.recipients.outputs.to }}
+        run: |
+          # The send step fails in under a second when one of these is empty,
+          # and the underlying error is easy to miss. Report presence up front
+          # so the cause is named instead of guessed. Values are never printed
+          # -- only whether each one is set.
+          missing=""
+          check() {
+            if [ -z "$(printf '%s' "$2" | tr -d '[:space:]')" ]; then
+              echo "  MISSING or empty: $1"
+              missing="$missing $1"
+            else
+              echo "  present: $1"
+            fi
+          }
+          echo "Mail secrets:"
+          check MAIL_SERVER   "$MAIL_SERVER"
+          check MAIL_PORT     "$MAIL_PORT"
+          check MAIL_USERNAME "$MAIL_USERNAME"
+          check MAIL_PASSWORD "$MAIL_PASSWORD"
+
+          case "$MAIL_PORT" in
+            ''|*[!0-9]*) echo "  WARNING: MAIL_PORT is not a plain number" ;;
+          esac
+
+          count=$(printf '%s' "$RECIPIENTS" | tr ',' '\n' | grep -c . || true)
+          echo "Recipients resolved: $count"
+
+          failed=""
+          if [ -n "$missing" ]; then
+            echo "::error::Mail configuration incomplete, empty secret(s):$missing. Set them under Settings > Secrets and variables > Actions."
+            failed=1
+          fi
+          if [ "$count" -eq 0 ]; then
+            # Not a secret -- this comes from the Choose email recipients step.
+            echo "::error::Recipient list resolved to nothing, so the send step would reject the message. Check the Choose email recipients step."
+            failed=1
+          fi
+          [ -z "$failed" ] || exit 1
+          echo "Mail configuration looks complete."
+
       - name: Send email notification
         if: always()          # notify on both success and failure
         uses: dawidd6/action-send-mail@v3
@@ -113,3 +162,8 @@ jobs:
             View the full run and download the HTML reports here:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           attachments: test/reports/*.html
+          # Logs the SMTP conversation at a high level so a send failure names
+          # its own cause in the run log. Deliberately not nodemailerdebug:
+          # that dumps the AUTH exchange, and base64-encoded secrets are not
+          # masked by Actions.
+          nodemailerlog: true
