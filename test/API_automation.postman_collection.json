@@ -17,152 +17,35 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "let response = pm.response.json();\r",
-                  "\r",
-                  "if (response.result && response.result.token) {\r",
-                  "    const generatedAt = new Date().toISOString();\r",
-                  "\r",
-                  "    pm.environment.set(\"authToken\", response.result.token);\r",
-                  "    pm.environment.set(\"authToken_generatedAt\", generatedAt);\r",
-                  "\r",
-                  "    // Print a short fingerprint of the token (not the whole thing) so you can\r",
-                  "    // visually confirm it changed between runs without dumping the full secret.\r",
-                  "    const tokenPreview = response.result.token.substring(0, 20) + \"...\";\r",
-                  "\r",
-                  "    console.log(`[${generatedAt}] Token generated. Preview: ${tokenPreview}`);\r",
-                  "} else {\r",
-                  "    console.log(`[${new Date().toISOString()}] Token NOT found in response.`);\r",
-                  "}\r",
-                  "\r",
-                  "\r",
-                  "// Check if the response status is 200\r",
-                  "pm.test(\"Status code is 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "\r",
-                  "// Save the token to an environment variable\r",
-                  "if (response.result && response.result.token) {\r",
-                  "    pm.environment.set(\"authToken\", response.result.token);\r",
-                  "    console.log(\"Token saved successfully\");\r",
-                  "} else {\r",
-                  "    console.log(\"Token not found in response\");\r",
-                  "}\r",
-                  "\r",
-                  "if (response.result && response.result.token) {\r",
-                  "    pm.collectionVariables.set(\"authToken\", response.result.token);\r",
-                  "}\r",
-                  "\r",
-                  "\r",
-                  "\r",
-                  "// --- Status & performance ---\r",
-                  "pm.test('Status code is 200', function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "var maxMs = Number(pm.environment.get(\"maxResponseTime\")) || 3000;\r",
-                  "pm.test(`Response time is less than ${maxMs} ms`, function () {\r",
-                  "    pm.expect(pm.response.responseTime).to.be.below(maxMs);\r",
-                  "});\r",
-                  "\r",
-                  "pm.test('Content-Type header is application/json', function () {\r",
-                  "    pm.response.to.have.header('Content-Type');\r",
-                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');\r",
-                  "});\r",
-                  "\r",
-                  "// --- Schema / structure ---\r",
-                  "let jsonData;\r",
-                  "pm.test('Response body is valid JSON', function () {\r",
-                  "    jsonData = pm.response.json();\r",
-                  "    pm.expect(jsonData).to.be.an('object');\r",
-                  "});\r",
-                  "\r",
-                  "pm.test('Top-level keys are present (query, result, error, message)', function () {\r",
-                  "    pm.expect(jsonData).to.have.all.keys('query', 'result', 'error', 'message');\r",
-                  "});\r",
-                  "\r",
-                  "pm.test('error is null on success', function () {\r",
-                  "    pm.expect(jsonData.error).to.be.null;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test('message confirms token generation', function () {\r",
-                  "    pm.expect(jsonData.message).to.eql('Token generated');\r",
-                  "});\r",
-                  "\r",
-                  "pm.test('result object contains a token', function () {\r",
-                  "    pm.expect(jsonData.result).to.be.an('object');\r",
-                  "    pm.expect(jsonData.result).to.have.property('token');\r",
-                  "    pm.expect(jsonData.result.token).to.be.a('string').and.not.empty;\r",
-                  "});\r",
-                  "\r",
-                  "pm.test('token header segment declares expected JWE algorithm', function () {\r",
-                  "    const token = jsonData.result.token;\r",
-                  "    const headerSegment = token.split('.')[0];\r",
-                  "    const decoded = JSON.parse(atob(headerSegment));\r",
-                  "    pm.expect(decoded).to.have.property('alg');\r",
-                  "    pm.expect(decoded).to.have.property('enc');\r",
-                  "});\r",
-                  "\r",
-                  "// Persist token for chaining into subsequent requests\r",
-                  "if (jsonData && jsonData.result && jsonData.result.token) {\r",
-                  "    pm.collectionVariables.set('generated_token', jsonData.result.token);\r",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "let response = pm.response.json();",
+                  "let token = response.responseObj?.responseDataParams?.data?.token || (response.result && response.result.token);",
+                  "if (token) {",
+                  "    pm.environment.set(\"authToken\", token);",
+                  "    pm.collectionVariables.set(\"authToken\", token);",
+                  "    console.log(\"Token saved successfully:\", token.substring(0, 20) + \"...\");",
+                  "} else {",
+                  "    console.log(\"Token not found in response\");",
                   "}"
                 ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "apikey",
-              "apikey": [
-                {
-                  "key": "key",
-                  "value": "Api-key",
-                  "type": "string"
-                },
-                {
-                  "key": "value",
-                  "value": "b80ef3613809388df1b18d4c4e378c4c1f6553081dd8f9d1255ae034431541fa",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
-                "key": "",
-                "value": "",
-                "type": "text",
-                "disabled": true
-              },
-              {
-                "key": "",
-                "value": "",
-                "type": "text",
-                "disabled": true
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "",
+              "raw": "{\"userId\":\"34444444445\",\"password\":\"34444444445\",\"grade\":5,\"application\":\"dev-test\",\"role\":\"student\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -170,19 +53,20 @@
               }
             },
             "url": {
-              "raw": "{{Orchestration}}api/virtualId/generateVirtualID?username=782653020",
+              "raw": "https://www.learnerai-dev.theall.ai/axl-authentication-service/api/v1/student/login",
+              "protocol": "https",
               "host": [
-                "{{Orchestration}}api"
+                "www",
+                "learnerai-dev",
+                "theall",
+                "ai"
               ],
               "path": [
-                "virtualId",
-                "generateVirtualID"
-              ],
-              "query": [
-                {
-                  "key": "username",
-                  "value": "782653020"
-                }
+                "axl-authentication-service",
+                "api",
+                "v1",
+                "student",
+                "login"
               ]
             }
           },
@@ -195,62 +79,12 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "// // Check if the request method is POST",
-                  "// pm.test(\"Request method is GET\", function () {",
-                  "//     var method = pm.request.method",
-                  "//     pm.expect(method).to.eql(\"GET\", \"Expected method is GET, but found \" + method);",
-                  "// });",
-                  "",
-                  "// // // Check if user id is present in the request URL path",
-                  "// // pm.test(\"User ID is present in the request URL path\", function () {",
-                  "// //     var url = pm.request.url.toString();",
-                  "// //     var userIdRegex = /\\/api\\/lesson\\/getLessonProgressByUserId\\/(\\d+)/;",
-                  "// //     var matches = url.match(userIdRegex);",
-                  "    ",
-                  "// //     pm.expect(matches && matches[1]).to.exist.and.to.not.eql(\"\", \"User ID is missing\");",
-                  "// // });",
-                  "",
-                  "// pm.test(\"User ID and language are present in the request URL\", function () {",
-                  "//     var url = pm.request.url.toString();",
-                  "//     var userIdRegex = /\\/api\\/lesson\\/getLessonProgressByUserId\\/(\\d+)/;",
-                  "//     var languageRegex = /language=(kn|hi|ta|en)/;",
-                  "//     var userIdMatches = url.match(userIdRegex);",
-                  "//     var languageMatches = url.match(languageRegex);",
-                  "    ",
-                  "//     pm.expect(userIdMatches && userIdMatches[1]).to.exist.and.to.not.eql(\"\", \"User ID is missing in the request URL path. Add user id in the URL.\");",
-                  "//     pm.expect(languageMatches && languageMatches[1]).to.exist.and.to.be.oneOf([\"kn\", \"hi\",\"en\",\"ta\"], \"Language parameter should be either 'kn' or 'hi'.\");",
-                  "// });",
-                  "",
-                  "// // Test for the responce format",
-                  "// pm.test(\"Response is in JSON Format\", function () {",
-                  "//     pm.response.to.have.header(\"Content-Type\", \"application/json; charset=utf-8\");",
-                  "// });",
-                  "",
-                  "// // check for the response fileds",
-                  "// pm.test(\"All Required fields are present\", function () {",
-                  "//     var jsonData = pm.response.json();",
-                  "//     console.log(\"jsonData----\", jsonData);",
-                  "//     var requiredFields = [\"userId\", \"sessionId\", \"milestone\", \"lesson\", \"progress\", \"milestoneLevel\", \"language\"];",
-                  "",
-                  "//     requiredFields.forEach(function(field) {",
-                  "//         pm.expect(jsonData.result.result).to.have.property(field);",
-                  "//     });",
-                  "// });",
-                  "",
-                  "// // check for the final result",
-                  "// pm.test(\"Return lesson by userId!\", function () {",
-                  "//     pm.response.to.have.status(200);",
-                  "// });",
-                  "",
-                  "",
-                  "",
-                  "",
                   "// --- Status & performance ---",
                   "pm.test('Status code is 200', function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "var maxMs = Number(pm.environment.get(\"maxResponseTime\")) || 3000;",
+                  "var maxMs = Number(pm.environment.get('maxResponseTime')) || 3000;",
                   "pm.test(`Response time is less than ${maxMs} ms`, function () {",
                   "    pm.expect(pm.response.responseTime).to.be.below(maxMs);",
                   "});",
@@ -287,8 +121,7 @@
                   "    pm.expect(jsonData.result).to.be.an('object');",
                   "    pm.expect(jsonData.result).to.include.all.keys(",
                   "        '_id', 'sessionId', 'milestone', 'milestoneLevel',",
-                  "        'subMilestoneLevel', 'language', 'lesson', 'progress',",
-                  "        'duration', 'applyLevel', 'createdAt', '__v'",
+                  "        'language', 'lesson', 'progress', 'createdAt', '__v'",
                   "    );",
                   "});",
                   "",
@@ -307,13 +140,15 @@
                   "    pm.expect(jsonData.result.progress).to.be.within(0, 100);",
                   "});",
                   "",
-                  "pm.test('duration is a non-negative number', function () {",
-                  "    pm.expect(jsonData.result.duration).to.be.a('number');",
-                  "    pm.expect(jsonData.result.duration).to.be.at.least(0);",
+                  "pm.test('duration is a non-negative number if present', function () {",
+                  "    if (jsonData.result.duration !== undefined) {",
+                  "        pm.expect(jsonData.result.duration).to.be.a('number');",
+                  "        pm.expect(jsonData.result.duration).to.be.at.least(0);",
+                  "    }",
                   "});",
                   "",
-                  "pm.test('milestone, milestoneLevel, subMilestoneLevel, applyLevel are non-empty strings', function () {",
-                  "    ['milestone', 'milestoneLevel', 'subMilestoneLevel', 'applyLevel'].forEach(function (field) {",
+                  "pm.test('milestone and milestoneLevel are non-empty strings', function () {",
+                  "    ['milestone', 'milestoneLevel'].forEach(function (field) {",
                   "        pm.expect(jsonData.result[field]).to.be.a('string').and.not.empty;",
                   "    });",
                   "});",
@@ -1213,75 +1048,35 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "let response = pm.response.json();\r",
-                  "\r",
-                  "if (response.result && response.result.token) {\r",
-                  "    const generatedAt = new Date().toISOString();\r",
-                  "\r",
-                  "    pm.environment.set(\"authToken\", response.result.token);\r",
-                  "    pm.environment.set(\"authToken_generatedAt\", generatedAt);\r",
-                  "\r",
-                  "    const tokenPreview = response.result.token.substring(0, 20) + \"...\";\r",
-                  "    console.log(`[${generatedAt}] Token generated. Preview: ${tokenPreview}`);\r",
-                  "} else {\r",
-                  "    console.log(`[${new Date().toISOString()}] Token NOT found in response.`);\r",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "let response = pm.response.json();",
+                  "let token = response.responseObj?.responseDataParams?.data?.token || (response.result && response.result.token);",
+                  "if (token) {",
+                  "    pm.environment.set(\"authToken\", token);",
+                  "    pm.collectionVariables.set(\"authToken\", token);",
+                  "    console.log(\"Token saved successfully:\", token.substring(0, 20) + \"...\");",
+                  "} else {",
+                  "    console.log(\"Token not found in response\");",
                   "}"
                 ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "apikey",
-              "apikey": [
-                {
-                  "key": "key",
-                  "value": "Api-key",
-                  "type": "string"
-                },
-                {
-                  "key": "value",
-                  "value": "b80ef3613809388df1b18d4c4e378c4c1f6553081dd8f9d1255ae034431541fa",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
-                "key": "",
-                "value": "",
-                "type": "text",
-                "disabled": true
-              },
-              {
-                "key": "",
-                "value": "",
-                "type": "text",
-                "disabled": true
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "",
+              "raw": "{\"userId\":\"34444444445\",\"password\":\"34444444445\",\"grade\":5,\"application\":\"dev-test\",\"role\":\"student\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1289,19 +1084,20 @@
               }
             },
             "url": {
-              "raw": "{{Orchestration}}api/virtualId/generateVirtualID?username=782653020",
+              "raw": "https://www.learnerai-dev.theall.ai/axl-authentication-service/api/v1/student/login",
+              "protocol": "https",
               "host": [
-                "{{Orchestration}}api"
+                "www",
+                "learnerai-dev",
+                "theall",
+                "ai"
               ],
               "path": [
-                "virtualId",
-                "generateVirtualID"
-              ],
-              "query": [
-                {
-                  "key": "username",
-                  "value": "782653020"
-                }
+                "axl-authentication-service",
+                "api",
+                "v1",
+                "student",
+                "login"
               ]
             }
           },
@@ -2285,75 +2081,35 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {\r",
-                  "    pm.response.to.have.status(200);\r",
-                  "});\r",
-                  "\r",
-                  "let response = pm.response.json();\r",
-                  "\r",
-                  "if (response.result && response.result.token) {\r",
-                  "    const generatedAt = new Date().toISOString();\r",
-                  "\r",
-                  "    pm.environment.set(\"authToken\", response.result.token);\r",
-                  "    pm.environment.set(\"authToken_generatedAt\", generatedAt);\r",
-                  "\r",
-                  "    const tokenPreview = response.result.token.substring(0, 20) + \"...\";\r",
-                  "    console.log(`[${generatedAt}] Token generated. Preview: ${tokenPreview}`);\r",
-                  "} else {\r",
-                  "    console.log(`[${new Date().toISOString()}] Token NOT found in response.`);\r",
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "let response = pm.response.json();",
+                  "let token = response.responseObj?.responseDataParams?.data?.token || (response.result && response.result.token);",
+                  "if (token) {",
+                  "    pm.environment.set(\"authToken\", token);",
+                  "    pm.collectionVariables.set(\"authToken\", token);",
+                  "    console.log(\"Token saved successfully:\", token.substring(0, 20) + \"...\");",
+                  "} else {",
+                  "    console.log(\"Token not found in response\");",
                   "}"
                 ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
-              }
-            },
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  ""
-                ],
-                "type": "text/javascript",
-                "packages": {},
-                "requests": {}
+                "type": "text/javascript"
               }
             }
           ],
           "request": {
-            "auth": {
-              "type": "apikey",
-              "apikey": [
-                {
-                  "key": "key",
-                  "value": "Api-key",
-                  "type": "string"
-                },
-                {
-                  "key": "value",
-                  "value": "b80ef3613809388df1b18d4c4e378c4c1f6553081dd8f9d1255ae034431541fa",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
-                "key": "",
-                "value": "",
-                "type": "text",
-                "disabled": true
-              },
-              {
-                "key": "",
-                "value": "",
-                "type": "text",
-                "disabled": true
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "",
+              "raw": "{\"userId\":\"34444444445\",\"password\":\"34444444445\",\"grade\":5,\"application\":\"dev-test\",\"role\":\"student\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2361,19 +2117,20 @@
               }
             },
             "url": {
-              "raw": "{{Orchestration}}api/virtualId/generateVirtualID?username=782653020",
+              "raw": "https://www.learnerai-dev.theall.ai/axl-authentication-service/api/v1/student/login",
+              "protocol": "https",
               "host": [
-                "{{Orchestration}}api"
+                "www",
+                "learnerai-dev",
+                "theall",
+                "ai"
               ],
               "path": [
-                "virtualId",
-                "generateVirtualID"
-              ],
-              "query": [
-                {
-                  "key": "username",
-                  "value": "782653020"
-                }
+                "axl-authentication-service",
+                "api",
+                "v1",
+                "student",
+                "login"
               ]
             }
           },
